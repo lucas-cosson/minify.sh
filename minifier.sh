@@ -46,6 +46,8 @@ fi
 
 for ARGUMENT in "$@"; do
 
+
+
   LONG_OPTION=${ARGUMENT#'--'}
   if [ "$LONG_OPTION" != $ARGUMENT ]; then
     case "$LONG_OPTION" in
@@ -91,7 +93,7 @@ for ARGUMENT in "$@"; do
     continue                                # continue
   fi
 
-  if [ ! -d $"ARGUMENT" ]; then
+  if [ ! -d "$ARGUMENT" ]; then
     error "$ARGUMENT is not a directory"
   fi
 
