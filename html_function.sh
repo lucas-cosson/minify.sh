@@ -26,8 +26,8 @@ minify_html () {
 
     if $ENABLE_TAG; then
       for TAG in $(cat "$2"); do
-        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<$TAG>*>[[:space:]]/<$TAG>/g")
-        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<\/$TAG>[[:space:]]/<\/$TAG>/g")
+        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<$TAG>*>[[:space:]]/<$TAG>/gI")
+        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<\/$TAG>[[:space:]]/<\/$TAG>/gI")
       done
     fi
     
