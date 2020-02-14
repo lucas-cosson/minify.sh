@@ -1,10 +1,11 @@
 #!/bin/dash
 
-
 # Var -------------------------------------------------------------------------
 DO_CSS=false
 DO_HTML=false
 VERBOSE=false
+FORCE=false
+NEXT_ARGUMENT_IS_TAG=false
 
 # Functions -------------------------------------------------------------------
 
@@ -39,30 +40,36 @@ error () {
 }
 
 # Parse arguments -------------------------------------------------------------
-NUMBER_OF_PATHS=$(echo $@ | tr ' ' '\n' | grep -E '^[^-]' -c)
-if [ $# -eq  0 ] || [ $NUMBER_OF_PATHS -ne 2 ]; then
+
+if [ $# -eq  0 ]; then
   error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
 fi
 
 for ARGUMENT in "$@"; do
 
-
+  if ( $NEXT_ARGUMENT_IS_TAG ); then
+    NEXT_ARGUMENT_IS_TAG=false
+    if [ ! -f "$ARGUMENT" ]; then
+      error 'Next argument of -t option need to be a file'
+    fi
+    continue
+  fi
 
   LONG_OPTION=${ARGUMENT#'--'}
   if [ "$LONG_OPTION" != $ARGUMENT ]; then
     case "$LONG_OPTION" in
-      'help' )
+      'help' )                              # help
         if [ "$#" -ne 1 ]; then 
           error 'Invalid option'
         fi
         help
         ;;
 
-      'CSS' )
+      'CSS' )                               # CSS
         DO_CSS=true
         ;;
 
-      'HTML' )
+      'HTML' )                              # HTML
         DO_HTML=true
         ;;
       * )
@@ -74,16 +81,16 @@ for ARGUMENT in "$@"; do
   SHORT_OPTION=${ARGUMENT#'-'}
   if [ "$SHORT_OPTION" != $ARGUMENT ]; then
     case "$SHORT_OPTION" in
-      't' )
+      't' )                                 # TAG
         TAG=true
         NEXT_ARGUMENT_IS_TAG=true
         ;;
 
-      'v' )
+      'v' )                                 # VERBOSE
         VERBOSE=true
         ;;
 
-      'f' )
+      'f' )                                 # FORCE
         FORCE=true
         ;;
 
@@ -99,12 +106,25 @@ for ARGUMENT in "$@"; do
 
   if [ ! -n "$DIR_SOURCE" ]; then
     DIR_SOURCE=$ARGUMENT
+  elif [ ! -n "$DIR_DEST" ]; then
+    DIR_DEST=$ARGUMENT
+  else
+    error "More than two pathes given"
   fi
 
 done
 
 
-# Set variables ---------------------------------------------------------------
+# Check and set variables -----------------------------------------------------
+
+if [ ! -n "$DIR_SOURCE" ] || [ ! -n "$DIR_DEST" ]; then
+  error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
+fi
+
+if [ "$DIR_SOURCE" = "$DIR_DEST" ]; then
+  error 'DIR_SOURCE and DIR_DEST must be different'
+fi
+
 if ! $DO_CSS && ! $DO_HTML; then
   DO_CSS=true
   DO_HTML=true
@@ -112,7 +132,7 @@ fi
 
 
 
-# Temporary ---------------------------------------------------------------
+# Temporary -------------------------------------------------------------------
 echo "Test : this is all the variables :"
 echo "DO_HTML : $DO_HTML"
 echo "DO_CSS : $DO_CSS"
