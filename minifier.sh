@@ -38,12 +38,19 @@ if [ $# -eq  0 ]; then
 fi
 
 for ARGUMENT in "$@"; do
-  OPTION=${ARGUMENT#'--'}
-  case "$OPTION" in
+  OPTION_LONGUE=${ARGUMENT#'--'}
+  OPTION_COURTE=${ARGUMENT#'-'}
+  case "$OPTION_LONGUE" in
     'help' )
       help
       ;;
-
+    * )
+      error "The '$ARGUMENT' option is not supported"
+  esac
+  case "$OPTION_COURTE" in
+    '-t' )
+      echo 't'
+      ;;
     * )
       error "The '$ARGUMENT' option is not supported"
   esac
