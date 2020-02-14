@@ -1,7 +1,9 @@
 #!/bin/dash
 
-help(){
-    echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
+# Functions --------------------------------------------------------------------
+
+help () {
+  echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
 
     Minifies HTML and/or CSS files with :
         dir_source path to the root directory of the website to be minified
@@ -21,14 +23,25 @@ help(){
 
     -t tags_file the "white space" characters preceding and following the
                 tags (opening or closing) listed in the ’tags_file’ are deleted'
+  exit 0
 }
 
-# Parse arguments
+error () {
+  echo "$1"
+  echo 'Enter "./minifier.sh --help" for more information.'
+  exit 1;
+}
+
+# Parse arguments --------------------------------------------------------------
 for ARGUMENT in "$@"; do
 
   OPTION=${ARGUMENT#'--'}
-  if [ "$OPTION" = "help" ]; then
-    help
-  fi
+  case "$OPTION" in
+    'help' )
+      help
+      ;;
+
+    * )
+      error "The '$ARGUMENT' option is not supported"
 done
 
