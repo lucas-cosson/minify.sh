@@ -20,17 +20,15 @@ minify_html () {
     fi
 
     local FILE_CONTENT
-    FILE_CONTENT=$(tr '\n' ' ' < "$1");
-    FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E 's/<!--[^-]*-->//g') # TODO : marche pour tous sauf les commentaires qui contiennent des tirets
+    FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -r -e 's/<!--([^-])*-->//g' -e 's/<!--([^>])*-->//g') # TODO : marche pour tous sauf les commentaires qui contiennent des tirets ET des '>'
     FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E 's/[[:space:]]+/ /g' ) # inutile sauf pour \v, echo fait le découpage avec l'IFS
 
     if $ENABLE_TAG; then
       for TAG in $(cat "$2"); do
-        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI")
-        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
+        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
       done
     fi
-    
+
     echo "$FILE_CONTENT"
 }
 

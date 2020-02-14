@@ -30,3 +30,11 @@ header
 main
 footer
 section
+img
+table
+th
+thead
+tbody
+tr
+link
+title
