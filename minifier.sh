@@ -1,6 +1,11 @@
 #!/bin/dash
 
-# Functions --------------------------------------------------------------------
+
+# Var -------------------------------------------------------------------------
+DO_CSS=false
+DO_HTML=false
+
+# Functions -------------------------------------------------------------------
 
 help () {
   echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
@@ -23,25 +28,37 @@ help () {
 
     -t tags_file the "white space" characters preceding and following the
                 tags (opening or closing) listed in the ’tags_file’ are deleted'
-  exit 0
+  exit 0                                      # exit without error
 }
 
 error () {
   echo "$1"
   echo 'Enter "./minifier.sh --help" for more information.'
-  exit 1;
+  exit 1                                      # exit with error
 }
 
-# Parse arguments
+# Parse arguments -------------------------------------------------------------
 if [ $# -eq  0 ]; then
   error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
 fi
 
 for ARGUMENT in "$@"; do
+
   OPTION=${ARGUMENT#'--'}
   case "$OPTION" in
     'help' )
+      if [ "$#" -ne 1 ]; then 
+        error 'Invalid option'
+      fi
       help
+      ;;
+
+    'CSS' )
+      DO_CSS=true
+      ;;
+
+    'HTML' )
+      DO_HTML=true
       ;;
 
     * )
@@ -50,3 +67,8 @@ for ARGUMENT in "$@"; do
 done
 
 
+# Set variables ---------------------------------------------------------------
+if ! $DO_CSS && ! $DO_HTML; then
+  DO_CSS=true
+  DO_HTML=true
+fi 
