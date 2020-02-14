@@ -52,7 +52,7 @@ for ARGUMENT in "$@"; do
     if [ ! -f "$ARGUMENT" ]; then
       error 'Next argument of -t option need to be a file'
     fi
-    continue
+    continue                                # continue
   fi
 
   LONG_OPTION=${ARGUMENT#'--'}
