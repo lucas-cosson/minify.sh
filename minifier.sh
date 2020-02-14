@@ -1,6 +1,12 @@
 #!/bin/dash
 
-# Functions --------------------------------------------------------------------
+
+# Var -------------------------------------------------------------------------
+DO_CSS=false
+DO_HTML=false
+VERBOSE=false
+
+# Functions -------------------------------------------------------------------
 
 help () {
   echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
@@ -23,37 +29,92 @@ help () {
 
     -t tags_file the "white space" characters preceding and following the
                 tags (opening or closing) listed in the ’tags_file’ are deleted'
-  exit 0
+  exit 0                                      # exit without error
 }
 
 error () {
   echo "$1"
   echo 'Enter "./minifier.sh --help" for more information.'
-  exit 1;
+  exit 1                                      # exit with error
 }
 
-# Parse arguments
-if [ $# -eq  0 ]; then
+# Parse arguments -------------------------------------------------------------
+NUMBER_OF_PATHS=$(echo $@ | tr ' ' '\n' | grep -E '^[^-]' -c)
+if [ $# -eq  0 ] || [ $NUMBER_OF_PATHS -ne 2 ]; then
   error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
 fi
 
 for ARGUMENT in "$@"; do
-  OPTION_LONGUE=${ARGUMENT#'--'}
-  OPTION_COURTE=${ARGUMENT#'-'}
-  case "$OPTION_LONGUE" in
-    'help' )
-      help
-      ;;
-    * )
-      error "The '$ARGUMENT' option is not supported"
-  esac
-  case "$OPTION_COURTE" in
-    '-t' )
-      echo 't'
-      ;;
-    * )
-      error "The '$ARGUMENT' option is not supported"
-  esac
+
+  LONG_OPTION=${ARGUMENT#'--'}
+  if [ "$LONG_OPTION" != $ARGUMENT ]; then
+    case "$LONG_OPTION" in
+      'help' )
+        if [ "$#" -ne 1 ]; then 
+          error 'Invalid option'
+        fi
+        help
+        ;;
+
+      'CSS' )
+        DO_CSS=true
+        ;;
+
+      'HTML' )
+        DO_HTML=true
+        ;;
+      * )
+        error "The '$ARGUMENT' option is not supported Jube"
+    esac
+    continue                                # continue
+  fi
+
+  SHORT_OPTION=${ARGUMENT#'-'}
+  if [ "$SHORT_OPTION" != $ARGUMENT ]; then
+    case "$SHORT_OPTION" in
+      't' )
+        TAG=true
+        NEXT_ARGUMENT_IS_TAG=true
+        ;;
+
+      'v' )
+        VERBOSE=true
+        ;;
+
+      'f' )
+        FORCE=true
+        ;;
+
+      * )
+        error "The '$ARGUMENT' option is not supported Dadeau"
+    esac
+    continue                                # continue
+  fi
+
+  if [ ! -d $"ARGUMENT" ]; then
+    error "$ARGUMENT is not a directory"
+  fi
+
+  if [ ! -n "$DIR_SOURCE" ]; then
+    DIR_SOURCE=$ARGUMENT
+  fi
+
 done
 
 
+# Set variables ---------------------------------------------------------------
+if ! $DO_CSS && ! $DO_HTML; then
+  DO_CSS=true
+  DO_HTML=true
+fi 
+
+
+
+# Temporary ---------------------------------------------------------------
+echo "Test : this is all the variables :"
+echo "DO_HTML : $DO_HTML"
+echo "DO_CSS : $DO_CSS"
+echo "VERBOSE : $VERBOSE"
+echo "FORCE : $FORCE"
+echo "DIR_SOURCE : $DIR_SOURCE"
+echo "DIR_DEST : $DIR_DEST"
