@@ -46,7 +46,7 @@ error () {
 minify_html () {
     if [ "${1%.html}" = "$1" ]; then
       echo "DEV : this is not a .html file" >&2
-      exit 1
+      exit 3
     fi
 
     local ENABLE_TAG
@@ -70,18 +70,20 @@ minify_html () {
     fi
 
     echo "$FILE_CONTENT"
+    return
 }
 
 minify_css(){
     if [ "${1%.css}" = "$1" ]; then
-        echo "DEV : this is not a .css file"
-        exit 1
+        echo "DEV : this is not a .css file" >&2
+        exit 3
     fi
 
     local FILE_CONTENT
     FILE_CONTENT=$(cat $1 | sed "s#/\*.*\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
     FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
     echo $FILE_CONTENT
+    return
 }
 
 # Parse arguments #############################################################
@@ -188,7 +190,13 @@ if ! $DO_CSS && ! $DO_HTML; then
   DO_HTML=true
 fi 
 
+if [ ${DIR_DEST%/} = $DIR_DEST ]; then
+  DIR_DEST=$DIR_DEST/
+fi
 
+if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then
+  SOURCE_DEST=$SOURCE_DEST/
+fi
 
 # Temporary ###################################################################
 echo "Test : this is all the variables :"
@@ -228,11 +236,13 @@ if [ -e "$DIR_DEST" ]; then
   fi
 fi
 
-mkdir $DIR_DEST
-
 # Copy and minify files -------------------------------------------------------
 for SOURCE_FILE in $(find "$DIR_SOURCE"); do
-  DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE/}
+  echo "Source file : $SOURCE_FILE"
+  echo "Dir file    : $DIR_SOURCE"
+  echo "Filename    : ${SOURCE_FILE#$DIR_SOURCE}"
+  DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE}
+  echo "Processing $SOURCE_FILE -> $DEST_FILE"
 
   if [ -d "$SOURCE_FILE" ]; then
     mkdir "$DEST_FILE"
@@ -243,12 +253,12 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
     continue
   fi
 
-  if [ $DO_CSS ] && [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
+  if [ $DO_CSS ] && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
     minify_css $SOURCE_FILE > $DEST_FILE
     continue
   fi
 
-  if [ $DO_HTML ] && [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
+  if [ $DO_HTML ] && ! [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
     minify_html $SOURCE_FILE $TAG_FILE > $DEST_FILE
     continue
   fi
