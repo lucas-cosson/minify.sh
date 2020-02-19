@@ -1,13 +1,13 @@
 #!/bin/dash
 
-# Var -------------------------------------------------------------------------
+# Var #########################################################################
 DO_CSS=false
 DO_HTML=false
 VERBOSE=false
 FORCE=false
 NEXT_ARGUMENT_IS_TAG=false
 
-# Functions -------------------------------------------------------------------
+# Functions ###################################################################
 
 help () {
   echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
@@ -39,7 +39,7 @@ error () {
   exit 1                                      # exit with error
 }
 
-# Parse arguments -------------------------------------------------------------
+# Parse arguments #############################################################
 
 if [ $# -eq  0 ]; then
   error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
@@ -100,11 +100,10 @@ for ARGUMENT in "$@"; do
     continue                                # continue
   fi
 
-  if [ ! -d "$ARGUMENT" ]; then
-    error "$ARGUMENT is not a directory"
-  fi
-
   if [ ! -n "$DIR_SOURCE" ]; then
+    if [ ! -d "$ARGUMENT" ]; then
+      error "$ARGUMENT is not a directory"
+    fi
     DIR_SOURCE=$ARGUMENT
   elif [ ! -n "$DIR_DEST" ]; then
     DIR_DEST=$ARGUMENT
@@ -115,8 +114,7 @@ for ARGUMENT in "$@"; do
 done
 
 
-# Check and set variables -----------------------------------------------------
-
+# Check and set variables #####################################################
 if [ ! -n "$DIR_SOURCE" ] || [ ! -n "$DIR_DEST" ]; then
   error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
 fi
@@ -132,7 +130,7 @@ fi
 
 
 
-# Temporary -------------------------------------------------------------------
+# Temporary ###################################################################
 echo "Test : this is all the variables :"
 echo "DO_HTML : $DO_HTML"
 echo "DO_CSS : $DO_CSS"
@@ -140,3 +138,60 @@ echo "VERBOSE : $VERBOSE"
 echo "FORCE : $FORCE"
 echo "DIR_SOURCE : $DIR_SOURCE"
 echo "DIR_DEST : $DIR_DEST"
+
+# Remove DIR_DEST -------------------------------------------------------------
+if [ -e "$DIR_DEST" ]; then
+  if $FORCE; then
+    if [ -d "$DIR_DEST" ]; then
+      rm -rf "$DIR_DEST"
+    else
+      rm -f "$DIR_DEST"
+    fi
+  else
+    if [ -d "$DIR_DEST" ]; then
+      read -p "Directory $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
+      if [ "$ANSWER" = "Y" ] || [ "$ANSWER" = "y" ]; then
+        rm -rf "$DIR_DEST"
+      else
+        echo "Quit script. "
+        exit 0
+      fi
+    else
+      read -p "File $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
+      if [ "$ANSWER" = "Y" ] || [ "$ANSWER" = "y" ]; then
+        rm -f "$DIR_DEST"
+      else
+        echo "Quit script. "
+        exit 0
+      fi
+    fi
+  fi
+fi
+
+mkdir $DIR_DEST
+
+# Copy and minify files -------------------------------------------------------
+for SOURCE_FILE in $(find "$DIR_SOURCE"); do
+  DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE/}
+
+  if [ -d "$SOURCE_FILE" ]; then
+    mkdir "$DEST_FILE"
+    if [ $? -ne 0 ]; then
+      echo "Directory creation failed, end of program" >&2
+      exit 1
+    fi
+    continue
+  fi
+
+  if false && [ $DO_CSS ] && [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
+    echo $SOURCE_FILE | minify_css > $DEST_FILE
+    continue
+  fi
+
+  if false && [ $DO_HTML ] && [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
+    echo $SOURCE_FILE | minify_html > $DEST_FILE
+    continue
+  fi
+
+  cp $SOURCE_FILE $DEST_FILE
+done
