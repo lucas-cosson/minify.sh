@@ -80,7 +80,7 @@ minify_css(){
     fi
 
     local FILE_CONTENT
-    FILE_CONTENT=$(cat $1 | sed "s#/\*.*\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
+    FILE_CONTENT=$(cat $1 | sed "s#/\*.{0,100}\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
     FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
     echo $FILE_CONTENT
     return
@@ -113,14 +113,14 @@ for ARGUMENT in "$@"; do
         ;;
 
       'CSS'|'css' )                               # CSS
-        if ( DO_CSS ); then
+        if ( $DO_CSS ); then
           error 'The argument --css is redundant'
         fi
         DO_CSS=true
         ;;
 
       'HTML'|'html' )                              # HTML
-        if ( DO_HTML ); then
+        if ( $DO_HTML ); then
           error 'The argument --html is redundant'
         fi
         DO_HTML=true
@@ -135,7 +135,7 @@ for ARGUMENT in "$@"; do
   if [ "$SHORT_OPTION" != $ARGUMENT ]; then
     case "$SHORT_OPTION" in
       't' )                                 # TAG
-        if ( TAG ); then
+        if ( $TAG ); then
           error 'The argument -t is redundant'
         fi
         TAG=true
@@ -143,14 +143,14 @@ for ARGUMENT in "$@"; do
         ;;
 
       'v' )                                 # VERBOSE
-        if ( VERBOSE ); then
+        if ( $VERBOSE ); then
           error 'The argument -v is redundant'
         fi
         VERBOSE=true
         ;;
 
       'f' )                                 # FORCE
-        if ( FORCE ); then
+        if ( $FORCE ); then
           error 'The argument -f is redundant'
         fi
         FORCE=true
@@ -199,13 +199,13 @@ if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then
 fi
 
 # Temporary ###################################################################
-echo "Test : this is all the variables :"
-echo "DO_HTML : $DO_HTML"
-echo "DO_CSS : $DO_CSS"
-echo "VERBOSE : $VERBOSE"
-echo "FORCE : $FORCE"
-echo "DIR_SOURCE : $DIR_SOURCE"
-echo "DIR_DEST : $DIR_DEST"
+# echo "Test : this is all the variables :"
+# echo "DO_HTML : $DO_HTML"
+# echo "DO_CSS : $DO_CSS"
+# echo "VERBOSE : $VERBOSE"
+# echo "FORCE : $FORCE"
+# echo "DIR_SOURCE : $DIR_SOURCE"
+# echo "DIR_DEST : $DIR_DEST"
 
 # Remove DIR_DEST -------------------------------------------------------------
 if [ -e "$DIR_DEST" ]; then
@@ -238,12 +238,8 @@ fi
 
 # Copy and minify files -------------------------------------------------------
 for SOURCE_FILE in $(find "$DIR_SOURCE"); do
-  echo "Source file : $SOURCE_FILE"
-  echo "Dir file    : $DIR_SOURCE"
-  echo "Filename    : ${SOURCE_FILE#$DIR_SOURCE}"
   DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE}
-  echo "Processing $SOURCE_FILE -> $DEST_FILE"
-
+  
   if [ -d "$SOURCE_FILE" ]; then
     mkdir "$DEST_FILE"
     if [ $? -ne 0 ]; then
@@ -253,15 +249,19 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
     continue
   fi
 
-  if [ $DO_CSS ] && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
+  if ( $DO_CSS ) && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
     minify_css $SOURCE_FILE > $DEST_FILE
     continue
   fi
 
-  if [ $DO_HTML ] && ! [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
+  if ( $DO_HTML ) && ! [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
     minify_html $SOURCE_FILE $TAG_FILE > $DEST_FILE
     continue
   fi
 
   cp $SOURCE_FILE $DEST_FILE
+
+  if ( $VERBOSE ); then
+    echo "Processing $SOURCE_FILE -> $DEST_FILE"
+  fi
 done
