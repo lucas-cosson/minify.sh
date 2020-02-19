@@ -65,11 +65,17 @@ for ARGUMENT in "$@"; do
         help
         ;;
 
-      'CSS' )                               # CSS
+      'CSS'|'css' )                               # CSS
+        if ( DO_CSS ); then
+          error 'The argument --css is redundant'
+        fi
         DO_CSS=true
         ;;
 
-      'HTML' )                              # HTML
+      'HTML'|'html' )                              # HTML
+        if ( DO_HTML ); then
+          error 'The argument --html is redundant'
+        fi
         DO_HTML=true
         ;;
       * )
@@ -82,15 +88,24 @@ for ARGUMENT in "$@"; do
   if [ "$SHORT_OPTION" != $ARGUMENT ]; then
     case "$SHORT_OPTION" in
       't' )                                 # TAG
+        if ( TAG ); then
+          error 'The argument -t is redundant'
+        fi
         TAG=true
         NEXT_ARGUMENT_IS_TAG=true
         ;;
 
       'v' )                                 # VERBOSE
+        if ( VERBOSE ); then
+          error 'The argument -v is redundant'
+        fi
         VERBOSE=true
         ;;
 
       'f' )                                 # FORCE
+        if ( FORCE ); then
+          error 'The argument -f is redundant'
+        fi
         FORCE=true
         ;;
 
