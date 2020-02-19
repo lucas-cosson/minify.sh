@@ -6,6 +6,7 @@ DO_HTML=false
 VERBOSE=false
 FORCE=false
 NEXT_ARGUMENT_IS_TAG=false
+TAG_FILE=""
 
 # Functions ###################################################################
 
@@ -37,6 +38,50 @@ error () {
   echo "$1"
   echo 'Enter "./minifier.sh --help" for more information.'
   exit 1                                      # exit with error
+}
+
+# $1 : path to an .html file
+# $2 : optional, path to tags_file
+# output the minified text to the standart output
+minify_html () {
+    if [ "${1%.html}" = "$1" ]; then
+      echo "DEV : this is not a .html file" >&2
+      exit 1
+    fi
+
+    local ENABLE_TAG
+    ENABLE_TAG=false
+    if [ -n "$2" ]; then
+      if [ ! -f "$2" ]; then
+        echo "DEV : tag_file is not a file" >&2
+        exit 1
+      fi
+      ENABLE_TAG=true
+    fi
+
+    local FILE_CONTENT
+    FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -r 's/<!--.{0,100}-->//g') # TODO : marche pour les commentaires de 100 max
+    FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e 's/[[:space:]]+/ /g' ) # inutile sauf pour \v, echo fait le découpage avec l'IFS
+
+    if $ENABLE_TAG; then
+      for TAG in $(cat "$2"); do
+        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
+      done
+    fi
+
+    echo "$FILE_CONTENT"
+}
+
+minify_css(){
+    if [ "${1%.css}" = "$1" ]; then
+        echo "DEV : this is not a .css file"
+        exit 1
+    fi
+
+    local FILE_CONTENT
+    FILE_CONTENT=$(cat $1 | sed "s#/\*.*\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
+    FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
+    echo $FILE_CONTENT
 }
 
 # Parse arguments #############################################################
@@ -193,18 +238,18 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
     mkdir "$DEST_FILE"
     if [ $? -ne 0 ]; then
       echo "Directory creation failed, end of program" >&2
-      exit 1
+      exit 2
     fi
     continue
   fi
 
-  if false && [ $DO_CSS ] && [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
-    echo $SOURCE_FILE | minify_css > $DEST_FILE
+  if [ $DO_CSS ] && [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
+    minify_css $SOURCE_FILE > $DEST_FILE
     continue
   fi
 
-  if false && [ $DO_HTML ] && [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
-    echo $SOURCE_FILE | minify_html > $DEST_FILE
+  if [ $DO_HTML ] && [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
+    minify_html $SOURCE_FILE $TAG_FILE > $DEST_FILE
     continue
   fi
 
