@@ -10,6 +10,7 @@ TAG_FILE=""
 
 # Functions ###################################################################
 
+# Print the script usage
 help () {
   echo 'Usage : ./minifier.sh [OPTION]... dir_source dir_dest
 
@@ -34,15 +35,28 @@ help () {
   exit 0                                      # exit without error
 }
 
+# Output the error in $1 and exit the program
 error () {
   echo "$1"
   echo 'Enter "./minifier.sh --help" for more information.'
   exit 1                                      # exit with error
 }
 
+# Print the Disk usage difference between two files
+# $1 file type
+# $2 Bigger file
+# $3 Smaller file
+print_du_diff () {
+  local INITIAL_SIZE
+  local FINAL_SIZE
+  INITIAL_SIZE=$(du "$2" -b | cut -f1)
+  FINAL_SIZE=$(du "$3" -b | cut -f1)
+  echo "File $1 : $2 --> $FINAL_SIZE / $INITIAL_SIZE : $((100 - 100 * FINAL_SIZE / INITIAL_SIZE))%"
+}
+
+# Minify an html file and send it to the standard output
 # $1 : path to an .html file
-# $2 : optional, path to tags_file
-# output the minified text to the standart output
+# $2 : optional, path to tags_file (delete spaces around all html tags in the tags_file)
 minify_html () {
     if [ "${1%.html}" = "$1" ]; then
       echo "DEV : this is not a .html file" >&2
@@ -73,17 +87,19 @@ minify_html () {
     return
 }
 
+# Minify an css file and send it to the standard output
+# $1 : path to an .css file
 minify_css(){
-    if [ "${1%.css}" = "$1" ]; then
-        echo "DEV : this is not a .css file" >&2
-        exit 3
-    fi
+  if [ "${1%.css}" = "$1" ]; then
+    echo "DEV : this is not a .css file" >&2
+    exit 3
+  fi
 
-    local FILE_CONTENT
-    FILE_CONTENT=$(cat $1 | sed "s#/\*.{0,100}\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
-    FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
-    echo $FILE_CONTENT
-    return
+  local FILE_CONTENT
+  FILE_CONTENT=$(cat $1 | sed "s#/\*.{0,100}\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
+  FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
+  echo $FILE_CONTENT
+  return
 }
 
 # Parse arguments #############################################################
@@ -198,15 +214,6 @@ if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then
   SOURCE_DEST=$SOURCE_DEST/
 fi
 
-# Temporary ###################################################################
-# echo "Test : this is all the variables :"
-# echo "DO_HTML : $DO_HTML"
-# echo "DO_CSS : $DO_CSS"
-# echo "VERBOSE : $VERBOSE"
-# echo "FORCE : $FORCE"
-# echo "DIR_SOURCE : $DIR_SOURCE"
-# echo "DIR_DEST : $DIR_DEST"
-
 # Remove DIR_DEST -------------------------------------------------------------
 if [ -e "$DIR_DEST" ]; then
   if $FORCE; then
@@ -251,17 +258,19 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
 
   if ( $DO_CSS ) && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
     minify_css $SOURCE_FILE > $DEST_FILE
+    if ( $VERBOSE ); then
+      print_du_diff "CSS" $SOURCE_FILE $DEST_FILE
+    fi
     continue
   fi
 
   if ( $DO_HTML ) && ! [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
     minify_html $SOURCE_FILE $TAG_FILE > $DEST_FILE
+    if ( $VERBOSE ); then
+      print_du_diff "HTML" $SOURCE_FILE $DEST_FILE
+    fi
     continue
   fi
 
   cp $SOURCE_FILE $DEST_FILE
-
-  if ( $VERBOSE ); then
-    echo "Processing $SOURCE_FILE -> $DEST_FILE"
-  fi
 done
