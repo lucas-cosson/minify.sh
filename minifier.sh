@@ -75,8 +75,8 @@ minify_html () {
     fi
 
     local FILE_CONTENT
-    FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -r 's/<!--.{0,100}-->//g') # TODO : marche pour les commentaires de 100 max
-    FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e 's/[[:space:]]+/ /g' ) # inutile sauf pour \v, echo fait le découpage avec l'IFS
+    FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')
+    FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's/<!--([^-]*)--([^>](.*)--)*>//g')
 
     if $ENABLE_TAG; then
       for TAG in $(cat "$2"); do
@@ -84,7 +84,7 @@ minify_html () {
       done
     fi
 
-    echo "$FILE_CONTENT"
+    echo -n "$FILE_CONTENT"
     return
 }
 
