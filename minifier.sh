@@ -201,20 +201,20 @@ if [ "$DIR_SOURCE" = "$DIR_DEST" ]; then
   error 'DIR_SOURCE and DIR_DEST must be different'
 fi
 
-if ! $DO_CSS && ! $DO_HTML; then
+if ! ( $DO_CSS ) && ! ( $DO_HTML ); then
   DO_CSS=true
   DO_HTML=true
 fi 
 
-if [ ${DIR_DEST%/} = $DIR_DEST ]; then
+if [ ${DIR_DEST%/} = $DIR_DEST ]; then       # add '/' at the end of the path
   DIR_DEST=$DIR_DEST/
 fi
 
-if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then
+if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then # add '/' at the end of the path
   SOURCE_DEST=$SOURCE_DEST/
 fi
 
-# Remove DIR_DEST -------------------------------------------------------------
+# Remove DIR_DEST if it exist -------------------------------------------------
 if [ -e "$DIR_DEST" ]; then
   if $FORCE; then
     if [ -d "$DIR_DEST" ]; then
@@ -274,3 +274,9 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
 
   cp $SOURCE_FILE $DEST_FILE
 done
+
+TOTAL_SIZE_SOURCE=$(du "$DIR_SOURCE" -b -s | cut -f1)
+TOTAL_SIZE_DEST=$(du "$DIR_DEST" -b -s | cut -f1)
+echo "Finished. Total size saved : $(($((TOTAL_SIZE_SOURCE - TOTAL_SIZE_DEST))/1000))Ko ($((100 - 100 * TOTAL_SIZE_DEST / TOTAL_SIZE_SOURCE))%)"
+
+exit 0
