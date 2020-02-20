@@ -116,6 +116,7 @@ for ARGUMENT in "$@"; do
     if [ ! -f "$ARGUMENT" ]; then
       error 'Next argument of -t option need to be a file'
     fi
+    TAG_FILE=$ARGUMENT
     continue                                # continue
   fi
 
