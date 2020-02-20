@@ -261,7 +261,7 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
   if ( $DO_CSS ) && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
     minify_css $SOURCE_FILE > $DEST_FILE
     if ( $VERBOSE ); then
-      print_du_diff "CSS" $SOURCE_FILE $DEST_FILE
+      print_du_diff "CSS " $SOURCE_FILE $DEST_FILE
     fi
     continue
   fi
