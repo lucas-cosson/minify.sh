@@ -5,6 +5,7 @@ DO_CSS=false
 DO_HTML=false
 VERBOSE=false
 FORCE=false
+TAG=false
 NEXT_ARGUMENT_IS_TAG=false
 TAG_FILE=""
 
