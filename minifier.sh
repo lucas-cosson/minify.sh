@@ -67,28 +67,30 @@ minify_html () {
 
   local FILE_CONTENT
   FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')
-  FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's|<!--([^-]*-?[^-]+)*--([^>]([^-]*-?[^-]+)--)*>||g')
+  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | perl -pe 's/<!--.*?-->//g')
+  #sed -r 's|<!--([^-]*-?[^-]+)*--([^>]([^-]*-?[^-]+)--)*>||g')
 
   if $ENABLE_TAG; then
     for TAG in $(cat "$2"); do
-      FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
+      FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | sed -E -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
     done
   fi
 
-  echo -n "$FILE_CONTENT"
+  printf '%s' "$FILE_CONTENT"
   return
 }
 
 # Minify an css file and send it to the standard output
 # $1 : path to an .css file
+# $2 : path to destination file
 minify_css(){
   local FILE_CONTENT
-  FILE_CONTENT=$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
-  # FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
+
+  FILE_CONTENT="$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')"
+
+  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | sed -r -e 's/[[:space:]]*([{};:,>+])[[:space:]]*/\1/g')   #Permet de supprimer les espaces entre les différents label
   
-  
-  # FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's|/\*([^*]*/?[^*]+)*\*([^/]([^*]*/?[^*]+)\*)*/||g')
-  echo -n $FILE_CONTENT
+  printf '%s' "$FILE_CONTENT" # on utilise printf plutôt que echo afin d'éviter les problèmes de formatage de echo
   return
 }
 
