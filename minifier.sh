@@ -59,47 +59,36 @@ print_du_diff () {
 # $1 : path to an .html file
 # $2 : optional, path to tags_file (delete spaces around all html tags in the tags_file)
 minify_html () {
-    if [ "${1%.html}" = "$1" ]; then
-      echo "DEV : this is not a .html file" >&2
-      exit 3
-    fi
+  local ENABLE_TAG
+  ENABLE_TAG=false
+  if [ -n "$2" ]; then
+    ENABLE_TAG=true
+  fi
 
-    local ENABLE_TAG
-    ENABLE_TAG=false
-    if [ -n "$2" ]; then
-      if [ ! -f "$2" ]; then
-        echo "DEV : tag_file is not a file" >&2
-        exit 1
-      fi
-      ENABLE_TAG=true
-    fi
+  local FILE_CONTENT
+  FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')
+  FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's|<!--([^-]*-?[^-]+)*--([^>]([^-]*-?[^-]+)--)*>||g')
 
-    local FILE_CONTENT
-    FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')
-    FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's/<!--([^-]*)--([^>](.*)--)*>//g')
+  if $ENABLE_TAG; then
+    for TAG in $(cat "$2"); do
+      FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
+    done
+  fi
 
-    if $ENABLE_TAG; then
-      for TAG in $(cat "$2"); do
-        FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E -e "s/[[:space:]]*<$TAG([^>]*)>*>[[:space:]]/<$TAG\1>/gI" -e "s/[[:space:]]*<\/$TAG([^>]*)>[[:space:]]/<\/$TAG\1>/gI")
-      done
-    fi
-
-    echo -n "$FILE_CONTENT"
-    return
+  echo -n "$FILE_CONTENT"
+  return
 }
 
 # Minify an css file and send it to the standard output
 # $1 : path to an .css file
 minify_css(){
-  if [ "${1%.css}" = "$1" ]; then
-    echo "DEV : this is not a .css file" >&2
-    exit 3
-  fi
-
   local FILE_CONTENT
-  FILE_CONTENT=$(cat $1 | sed "s#/\*.{0,100}\*/\(.\+\)#\1#" | sed -E "/\/\*/,/\*\// d")             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
-  FILE_CONTENT=$(echo -n $FILE_CONTENT | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
-  echo $FILE_CONTENT
+  FILE_CONTENT=$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')             #Permet de suprimer les commentaire 1)sur une ligne 2)multiligne
+  # FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -E "s/([[:alnum:]])[ ]*([{;:,>+])[ ]*/\1\2/g")   #Permet de supprimer les espaces entre les différents label
+  
+  
+  # FILE_CONTENT=$(echo -n "$FILE_CONTENT" | sed -r 's|/\*([^*]*/?[^*]+)*\*([^/]([^*]*/?[^*]+)\*)*/||g')
+  echo -n $FILE_CONTENT
   return
 }
 
@@ -144,7 +133,7 @@ for ARGUMENT in "$@"; do
         DO_HTML=true
         ;;
       * )
-        error "The '$ARGUMENT' option is not supported Jube"
+        error "The '$ARGUMENT' option is not supported"
     esac
     continue                                # continue
   fi
@@ -175,7 +164,7 @@ for ARGUMENT in "$@"; do
         ;;
 
       * )
-        error "The '$ARGUMENT' option is not supported Dadeau"
+        error "The '$ARGUMENT' option is not supported"
     esac
     continue                                # continue
   fi
