@@ -5,6 +5,7 @@ Made as a shell project for L2-S4 "Système"
 
 ## What can it do ?
 This tool can reduce HTML and CSS from the command line, reproducing the whole tree view of a `source_folder` into an the `dest_folder` with the minified code.
+It deleted extra spaces and comments from the source code.
 
 ```
 Usage : ./minifier.sh [OPTION]... dir_source dir_dest
@@ -32,5 +33,9 @@ Usage : ./minifier.sh [OPTION]... dir_source dir_dest
 ## Tools used
 We use `tr`, `sed` and `perl` to remove unecessary code (spaces, line breaks, comments) from the existing files and `du` to calculate disk usage.
 
-## Possible improvement
-- Reduce images
+## Possible improvements
+- Reduce media
+- Minify JavaScript scripts
+
+# Who has done what
+We wrote the code to handle the arguments and to copy the tree view together. Lucas made the css minification, and Nathanaël did the html minification. 

@@ -36,7 +36,7 @@ help () {
   exit 0                                      # exit without error
 }
 
-# Output the error in $1 and exit the program
+# Output the error described in $1 and exit the program
 error () {
   echo "$1"
   echo 'Enter "./minifier.sh --help" for more information.'
@@ -66,9 +66,8 @@ minify_html () {
   fi
 
   local FILE_CONTENT
-  FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')
-  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | perl -pe 's/<!--.*?-->//g')
-  #sed -r 's|<!--([^-]*-?[^-]+)*--([^>]([^-]*-?[^-]+)--)*>||g')
+  FILE_CONTENT=$(tr '\n' ' ' < "$1" | sed -E -e 's/[[:space:]]+/ /g')       # delete extra spaces
+  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | perl -pe 's/<!--.*?-->//g')  # delete html comments
 
   if $ENABLE_TAG; then
     for TAG in $(cat "$2"); do
@@ -82,15 +81,13 @@ minify_html () {
 
 # Minify an css file and send it to the standard output
 # $1 : path to an .css file
-# $2 : path to destination file
 minify_css(){
   local FILE_CONTENT
 
-  FILE_CONTENT="$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')"
-
-  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | sed -r -e 's/[[:space:]]*([{};:,>+])[[:space:]]*/\1/g')   #Permet de supprimer les espaces entre les différents label
+  FILE_CONTENT="$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')"                                        # delete css comments
+  FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | sed -r -e 's/[[:space:]]*([{};:,>+])[[:space:]]*/\1/g')  # delete spaces between labels
   
-  printf '%s' "$FILE_CONTENT" # on utilise printf plutôt que echo afin d'éviter les problèmes de formatage de echo
+  printf '%s' "$FILE_CONTENT"                       # we use printf instead of echo because echo transform the html escaped char codes
   return
 }
 
@@ -114,21 +111,21 @@ for ARGUMENT in "$@"; do
   LONG_OPTION=${ARGUMENT#'--'}
   if [ "$LONG_OPTION" != $ARGUMENT ]; then
     case "$LONG_OPTION" in
-      'help' )                              # help
+      'help' )                                      # help
         if [ "$#" -ne 1 ]; then 
           error 'Invalid option'
         fi
         help
         ;;
 
-      'CSS'|'css' )                               # CSS
+      'CSS'|'css' )                                 # CSS
         if ( $DO_CSS ); then
           error 'The argument --css is redundant'
         fi
         DO_CSS=true
         ;;
 
-      'HTML'|'html' )                              # HTML
+      'HTML'|'html' )                               # HTML
         if ( $DO_HTML ); then
           error 'The argument --html is redundant'
         fi
@@ -143,7 +140,7 @@ for ARGUMENT in "$@"; do
   SHORT_OPTION=${ARGUMENT#'-'}
   if [ "$SHORT_OPTION" != $ARGUMENT ]; then
     case "$SHORT_OPTION" in
-      't' )                                 # TAG
+      't' )                                         # TAG
         if ( $TAG ); then
           error 'The argument -t is redundant'
         fi
@@ -151,14 +148,14 @@ for ARGUMENT in "$@"; do
         NEXT_ARGUMENT_IS_TAG=true
         ;;
 
-      'v' )                                 # VERBOSE
+      'v' )                                         # VERBOSE
         if ( $VERBOSE ); then
           error 'The argument -v is redundant'
         fi
         VERBOSE=true
         ;;
 
-      'f' )                                 # FORCE
+      'f' )                                         # FORCE
         if ( $FORCE ); then
           error 'The argument -f is redundant'
         fi
@@ -270,6 +267,8 @@ done
 
 TOTAL_SIZE_SOURCE=$(du "$DIR_SOURCE" -b -s | cut -f1)
 TOTAL_SIZE_DEST=$(du "$DIR_DEST" -b -s | cut -f1)
-echo "Finished. Total size saved : $(($((TOTAL_SIZE_SOURCE - TOTAL_SIZE_DEST))/1000))Ko ($((100 - 100 * TOTAL_SIZE_DEST / TOTAL_SIZE_SOURCE))%)"
+if ( $VERBOSE ); then
+  echo "Finished. Total size saved : $(($((TOTAL_SIZE_SOURCE - TOTAL_SIZE_DEST))/1000))Kb ($((100 - 100 * TOTAL_SIZE_DEST / TOTAL_SIZE_SOURCE))%)"
+fi
 
 exit 0
