@@ -238,8 +238,8 @@ for SOURCE_FILE in $(find "$DIR_SOURCE"); do
   DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE}
 
   if [ -d "$SOURCE_FILE" ]; then
-    if mkdir "$DEST_FILE"; then
-      echo "Directory creation failed, end of program" >&2
+    if ! mkdir "$DEST_FILE"; then
+      echo "Directory '$DEST_FILE' creation failed, end of program" >&2
       exit 2
     fi
     continue
