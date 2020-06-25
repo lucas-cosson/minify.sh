@@ -32,7 +32,7 @@ help () {
     files are minified
 
     -t tags_file the "white space" characters preceding and following the
-                tags (opening or closing) listed in the ’tags_file’ are deleted'
+                tags (opening or closing) listed in the "tags_file" are deleted'
   exit 0                                      # exit without error
 }
 
@@ -84,7 +84,7 @@ minify_html () {
 minify_css(){
   local FILE_CONTENT
 
-  FILE_CONTENT="$(tr '\n' ' ' < $1 | perl -pe 's|/\*.*?\*/||g')"                                        # delete css comments
+  FILE_CONTENT="$(tr '\n' ' ' < "$1" | perl -pe 's|/\*.*?\*/||g')"                                        # delete css comments
   FILE_CONTENT=$(printf '%s' "$FILE_CONTENT" | sed -r -e 's/[[:space:]]*([{};:,>+])[[:space:]]*/\1/g')  # delete spaces between labels
   
   printf '%s' "$FILE_CONTENT"                       # we use printf instead of echo because echo transform the html escaped char codes
@@ -94,7 +94,7 @@ minify_css(){
 # Parse arguments #############################################################
 
 if [ $# -eq  0 ]; then
-  error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
+  error 'Paths to "dir_source" and "dir_dest" directories must be specified'
 fi
 
 for ARGUMENT in "$@"; do
@@ -109,7 +109,7 @@ for ARGUMENT in "$@"; do
   fi
 
   LONG_OPTION=${ARGUMENT#'--'}
-  if [ "$LONG_OPTION" != $ARGUMENT ]; then
+  if [ "$LONG_OPTION" != "$ARGUMENT" ]; then
     case "$LONG_OPTION" in
       'help' )                                      # help
         if [ "$#" -ne 1 ]; then 
@@ -138,7 +138,7 @@ for ARGUMENT in "$@"; do
   fi
 
   SHORT_OPTION=${ARGUMENT#'-'}
-  if [ "$SHORT_OPTION" != $ARGUMENT ]; then
+  if [ "$SHORT_OPTION" != "$ARGUMENT" ]; then
     case "$SHORT_OPTION" in
       't' )                                         # TAG
         if ( $TAG ); then
@@ -168,12 +168,12 @@ for ARGUMENT in "$@"; do
     continue                                # continue
   fi
 
-  if [ ! -n "$DIR_SOURCE" ]; then
+  if [ -z "$DIR_SOURCE" ]; then
     if [ ! -d "$ARGUMENT" ]; then
       error "$ARGUMENT is not a directory"
     fi
     DIR_SOURCE=$ARGUMENT
-  elif [ ! -n "$DIR_DEST" ]; then
+  elif [ -z "$DIR_DEST" ]; then
     DIR_DEST=$ARGUMENT
   else
     error "More than two pathes given"
@@ -183,8 +183,8 @@ done
 
 
 # Check and set variables #####################################################
-if [ ! -n "$DIR_SOURCE" ] || [ ! -n "$DIR_DEST" ]; then
-  error 'Paths to ’dir_source’ and ’dir_dest’ directories must be specified'
+if [ -z "$DIR_SOURCE" ] || [ -z "$DIR_DEST" ]; then
+  error 'Paths to "dir_source" and "dir_dest" directories must be specified'
 fi
 
 if [ "$DIR_SOURCE" = "$DIR_DEST" ]; then
@@ -194,13 +194,13 @@ fi
 if ! ( $DO_CSS ) && ! ( $DO_HTML ); then
   DO_CSS=true
   DO_HTML=true
-fi 
+fi
 
-if [ ${DIR_DEST%/} = $DIR_DEST ]; then       # add '/' at the end of the path
+if [ "${DIR_DEST%/}" = "$DIR_DEST" ]; then       # add '/' at the end of the path
   DIR_DEST=$DIR_DEST/
 fi
 
-if [ ${SOURCE_DEST%/} = $SOURCE_DEST ]; then # add '/' at the end of the path
+if [ "${SOURCE_DEST%/}" = "$SOURCE_DEST" ]; then # add '/' at the end of the path
   SOURCE_DEST=$SOURCE_DEST/
 fi
 
@@ -214,7 +214,7 @@ if [ -e "$DIR_DEST" ]; then
     fi
   else
     if [ -d "$DIR_DEST" ]; then
-      read -p "Directory $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
+      read -rp "Directory $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
       if [ "$ANSWER" = "Y" ] || [ "$ANSWER" = "y" ]; then
         rm -rf "$DIR_DEST"
       else
@@ -222,7 +222,7 @@ if [ -e "$DIR_DEST" ]; then
         exit 0
       fi
     else
-      read -p "File $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
+      read -rp "File $DIR_DEST already exist. Do you want to delete it ? [Y/n] " ANSWER
       if [ "$ANSWER" = "Y" ] || [ "$ANSWER" = "y" ]; then
         rm -f "$DIR_DEST"
       else
@@ -236,33 +236,32 @@ fi
 # Copy and minify files -------------------------------------------------------
 for SOURCE_FILE in $(find "$DIR_SOURCE"); do
   DEST_FILE=$DIR_DEST${SOURCE_FILE#$DIR_SOURCE}
-  
+
   if [ -d "$SOURCE_FILE" ]; then
-    mkdir "$DEST_FILE"
-    if [ $? -ne 0 ]; then
+    if mkdir "$DEST_FILE"; then
       echo "Directory creation failed, end of program" >&2
       exit 2
     fi
     continue
   fi
 
-  if ( $DO_CSS ) && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
-    minify_css $SOURCE_FILE > $DEST_FILE
+  if ( "$DO_CSS" ) && ! [ "${SOURCE_FILE%.css}" = "$SOURCE_FILE" ]; then
+    minify_css "$SOURCE_FILE" > "$DEST_FILE"
     if ( $VERBOSE ); then
-      print_du_diff "CSS " $SOURCE_FILE $DEST_FILE
+      print_du_diff "CSS " "$SOURCE_FILE" "$DEST_FILE"
     fi
     continue
   fi
 
   if ( $DO_HTML ) && ! [ "${SOURCE_FILE%.html}" = "$SOURCE_FILE" ]; then
-    minify_html $SOURCE_FILE $TAG_FILE > $DEST_FILE
+    minify_html "$SOURCE_FILE" "$TAG_FILE" > "$DEST_FILE"
     if ( $VERBOSE ); then
-      print_du_diff "HTML" $SOURCE_FILE $DEST_FILE
+      print_du_diff "HTML" "$SOURCE_FILE" "$DEST_FILE"
     fi
     continue
   fi
 
-  cp $SOURCE_FILE $DEST_FILE
+  cp "$SOURCE_FILE" "$DEST_FILE"
 done
 
 TOTAL_SIZE_SOURCE=$(du "$DIR_SOURCE" -b -s | cut -f1)
